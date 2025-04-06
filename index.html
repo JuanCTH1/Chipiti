@@ -1,143 +1,121 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Dr. Chipiti - Entrevista Inicial</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
-    .campo { margin: 1rem 0; }
-    .respuesta { margin-top: 0.5rem; font-style: italic; }
-  </style>
-</head>
-<body>
-  <h1>Dr. Chipiti te da la bienvenida</h1>
-  <div id="entrevista"></div>
-  <div id="perfilFinal" style="display:none;">
-    <h2>Tu perfil:</h2>
-    <pre id="jsonOutput"></pre>
-    <h2>Campos personalizados:</h2>
-    <div id="camposDinamicos"></div>
-  </div>
+<script>
+  const preguntas = [
+    { clave: 'edad', texto: '¿Cuál es tu edad?' },
+    { clave: 'embarazo', texto: '¿Estás embarazada?', opciones: ['sí', 'no'] },
+    { clave: 'condiciones', texto: '¿Tienes alguna condición médica (ej. diabetes, resistencia a la insulina)?' },
+    { clave: 'objetivo', texto: '¿Cuál es tu objetivo principal con Chipiti?' },
+    { clave: 'alimentos', texto: '¿Qué alimentos te gustaría consultar o evitar?' }
+  ];
 
-  <script>
-    const preguntas = [
-      { clave: 'edad', texto: '¿Cuál es tu edad?' },
-      { clave: 'embarazo', texto: '¿Estás embarazada?', opciones: ['sí', 'no'] },
-      { clave: 'condiciones', texto: '¿Tienes alguna condición médica (ej. diabetes, resistencia a la insulina)?' },
-      { clave: 'objetivo', texto: '¿Cuál es tu objetivo principal con Chipiti?' },
-      { clave: 'alimentos', texto: '¿Qué alimentos te gustaría consultar o evitar?' }
-    ];
+  let respuestas = {};
+  let paso = 0;
 
-    let respuestas = {};
-    let paso = 0;
+  function mostrarPregunta() {
+    const contenedor = document.getElementById('entrevista');
+    contenedor.innerHTML = '';
+    const pregunta = preguntas[paso];
 
-    function mostrarPregunta() {
-      const contenedor = document.getElementById('entrevista');
-      contenedor.innerHTML = '';
-      const pregunta = preguntas[paso];
+    const label = document.createElement('label');
+    label.textContent = pregunta.texto;
 
-      const label = document.createElement('label');
-      label.textContent = pregunta.texto;
+    const input = pregunta.opciones ? document.createElement('select') : document.createElement('input');
+    input.className = 'campo';
 
-      const input = pregunta.opciones ? document.createElement('select') : document.createElement('input');
-      input.className = 'campo';
-
-      if (pregunta.opciones) {
-        pregunta.opciones.forEach(opt => {
-          const option = document.createElement('option');
-          option.value = opt;
-          option.textContent = opt;
-          input.appendChild(option);
-        });
-      }
-
-      const boton = document.createElement('button');
-      boton.textContent = 'Siguiente';
-      boton.onclick = () => {
-        respuestas[pregunta.clave] = input.value;
-        paso++;
-        if (paso < preguntas.length) {
-          mostrarPregunta();
-        } else {
-          generarPerfil();
-        }
-      };
-
-      contenedor.appendChild(label);
-      contenedor.appendChild(document.createElement('br'));
-      contenedor.appendChild(input);
-      contenedor.appendChild(document.createElement('br'));
-      contenedor.appendChild(boton);
+    if (pregunta.opciones) {
+      pregunta.opciones.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        input.appendChild(option);
+      });
     }
 
-    function generarPerfil() {
-      const perfil = {
-        ...respuestas,
-        componentes: []
-      };
-
-      if (respuestas.embarazo === 'sí') {
-        perfil.componentes.push({
-          tipo: 'campo_texto',
-          nombre: 'Consulta de alimentos seguros en el embarazo',
-          placeholder: 'Ej. queso feta, salmón, jamón serrano',
-          accion: 'consultar_alimento'
-        });
+    const boton = document.createElement('button');
+    boton.textContent = 'Siguiente';
+    boton.onclick = () => {
+      respuestas[pregunta.clave] = input.value;
+      paso++;
+      if (paso < preguntas.length) {
+        mostrarPregunta();
+      } else {
+        generarPerfil();
       }
+    };
 
-      if (respuestas.condiciones.toLowerCase().includes('glucosa') || respuestas.objetivo.includes('glucosa')) {
-        perfil.componentes.push({
-          tipo: 'campo_texto',
-          nombre: 'Consulta alimentos y su impacto en glucosa',
-          placeholder: 'Ej. avena, mango, arroz',
-          accion: 'consultar_glucosa'
-        });
-      }
+    contenedor.appendChild(label);
+    contenedor.appendChild(document.createElement('br'));
+    contenedor.appendChild(input);
+    contenedor.appendChild(document.createElement('br'));
+    contenedor.appendChild(boton);
+  }
 
+  function generarPerfil() {
+    const perfil = {
+      ...respuestas,
+      componentes: []
+    };
+
+    if (respuestas.embarazo === 'sí') {
       perfil.componentes.push({
         tipo: 'campo_texto',
-        nombre: '¿Qué te gustaría comer hoy?',
-        placeholder: 'Ej. algo fresco, sin lácteos',
-        accion: 'sugerir_menu'
-      });
-
-      // Guardar en localStorage
-      localStorage.setItem('perfilChipiti', JSON.stringify(perfil));
-
-      mostrarCampos(perfil);
-    }
-
-    function mostrarCampos(perfil) {
-      document.getElementById('entrevista').style.display = 'none';
-      document.getElementById('perfilFinal').style.display = 'block';
-      document.getElementById('jsonOutput').textContent = JSON.stringify(perfil, null, 2);
-
-      const contenedor = document.getElementById('camposDinamicos');
-      contenedor.innerHTML = '';
-      perfil.componentes.forEach(campo => {
-        const div = document.createElement('div');
-        div.className = 'campo';
-
-        const label = document.createElement('label');
-        label.textContent = campo.nombre;
-
-        const input = document.createElement('input');
-        input.placeholder = campo.placeholder || '';
-
-        div.appendChild(label);
-        div.appendChild(document.createElement('br'));
-        div.appendChild(input);
-        contenedor.appendChild(div);
+        nombre: 'Consulta de alimentos seguros en el embarazo',
+        placeholder: 'Ej. queso feta, salmón, jamón serrano',
+        accion: 'consultar_alimento'
       });
     }
 
-    // Verificar si ya hay un perfil guardado
+    if (respuestas.condiciones.toLowerCase().includes('glucosa') || respuestas.objetivo.includes('glucosa')) {
+      perfil.componentes.push({
+        tipo: 'campo_texto',
+        nombre: 'Consulta alimentos y su impacto en glucosa',
+        placeholder: 'Ej. avena, mango, arroz',
+        accion: 'consultar_glucosa'
+      });
+    }
+
+    perfil.componentes.push({
+      tipo: 'campo_texto',
+      nombre: '¿Qué te gustaría comer hoy?',
+      placeholder: 'Ej. algo fresco, sin lácteos',
+      accion: 'sugerir_menu'
+    });
+
+    // Guardar en localStorage
+    localStorage.setItem('perfilChipiti', JSON.stringify(perfil));
+    mostrarCampos(perfil);
+  }
+
+  function mostrarCampos(perfil) {
+    document.getElementById('entrevista').style.display = 'none';
+    document.getElementById('perfilFinal').style.display = 'block';
+    document.getElementById('jsonOutput').textContent = JSON.stringify(perfil, null, 2);
+
+    const contenedor = document.getElementById('camposDinamicos');
+    contenedor.innerHTML = '';
+    perfil.componentes.forEach(campo => {
+      const div = document.createElement('div');
+      div.className = 'campo';
+
+      const label = document.createElement('label');
+      label.textContent = campo.nombre;
+
+      const input = document.createElement('input');
+      input.placeholder = campo.placeholder || '';
+
+      div.appendChild(label);
+      div.appendChild(document.createElement('br'));
+      div.appendChild(input);
+      contenedor.appendChild(div);
+    });
+  }
+
+  // Verificar si ya hay un perfil guardado
+  window.onload = () => {
     const perfilGuardado = localStorage.getItem('perfilChipiti');
     if (perfilGuardado) {
       mostrarCampos(JSON.parse(perfilGuardado));
     } else {
       mostrarPregunta();
     }
-  </script>
-</body>
-</html>
+  };
+</script>
