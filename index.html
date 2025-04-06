@@ -101,6 +101,9 @@
         accion: 'sugerir_menu'
       });
 
+      // Guardar en localStorage
+      localStorage.setItem('perfilChipiti', JSON.stringify(perfil));
+
       mostrarCampos(perfil);
     }
 
@@ -110,6 +113,7 @@
       document.getElementById('jsonOutput').textContent = JSON.stringify(perfil, null, 2);
 
       const contenedor = document.getElementById('camposDinamicos');
+      contenedor.innerHTML = '';
       perfil.componentes.forEach(campo => {
         const div = document.createElement('div');
         div.className = 'campo';
@@ -127,8 +131,13 @@
       });
     }
 
-    // Iniciar la entrevista
-    mostrarPregunta();
+    // Verificar si ya hay un perfil guardado
+    const perfilGuardado = localStorage.getItem('perfilChipiti');
+    if (perfilGuardado) {
+      mostrarCampos(JSON.parse(perfilGuardado));
+    } else {
+      mostrarPregunta();
+    }
   </script>
 </body>
 </html>
