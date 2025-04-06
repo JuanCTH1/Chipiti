@@ -110,7 +110,7 @@
   }
 
   // Verificar si ya hay un perfil guardado
-  window.onload = () => {
+window.addEventListener('DOMContentLoaded', () => {
     const perfilGuardado = localStorage.getItem('perfilChipiti');
     if (perfilGuardado) {
       mostrarCampos(JSON.parse(perfilGuardado));
