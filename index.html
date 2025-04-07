@@ -1,121 +1,289 @@
-<script>
-  const preguntas = [
-    { clave: 'edad', texto: '¿Cuál es tu edad?' },
-    { clave: 'embarazo', texto: '¿Estás embarazada?', opciones: ['sí', 'no'] },
-    { clave: 'condiciones', texto: '¿Tienes alguna condición médica (ej. diabetes, resistencia a la insulina)?' },
-    { clave: 'objetivo', texto: '¿Cuál es tu objetivo principal con Chipiti?' },
-    { clave: 'alimentos', texto: '¿Qué alimentos te gustaría consultar o evitar?' }
-  ];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dr. Chipiti</title>
+  <link rel="icon" type="image/x-icon" href="/Images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
 
-  let respuestas = {};
-  let paso = 0;
-
-  function mostrarPregunta() {
-    const contenedor = document.getElementById('entrevista');
-    contenedor.innerHTML = '';
-    const pregunta = preguntas[paso];
-
-    const label = document.createElement('label');
-    label.textContent = pregunta.texto;
-
-    const input = pregunta.opciones ? document.createElement('select') : document.createElement('input');
-    input.className = 'campo';
-
-    if (pregunta.opciones) {
-      pregunta.opciones.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt;
-        option.textContent = opt;
-        input.appendChild(option);
-      });
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to right, #f2f2f2, #e6f7ff);
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
 
-    const boton = document.createElement('button');
-    boton.textContent = 'Siguiente';
-    boton.onclick = () => {
-      respuestas[pregunta.clave] = input.value;
-      paso++;
-      if (paso < preguntas.length) {
-        mostrarPregunta();
-      } else {
-        generarPerfil();
+    .container {
+      max-width: 700px;
+      width: 90%;
+      padding: 40px 20px;
+      margin-top: 60px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 25px;
+      outline-color: #0d47a1;
+    }
+
+    button {
+      background-color: #00796b;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #fafafa;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      transition: all 0.3s ease-in-out;
+    }
+
+    li:hover {
+      transform: scale(1.01);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+
+    .rojo { color: #d32f2f; font-weight: bold; font-size: 1.2rem; }
+    .amarillo { color: #f9a825; font-weight: bold; font-size: 1.2rem; }
+    .verde { color: #388e3c; font-weight: bold; font-size: 1.2rem; }
+
+    small {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.5;
+    }
+
+    .loading {
+      font-style: italic;
+      color: #666;
+      margin-top: -15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .alternativas {
+      margin-top: 10px;
+    }
+
+    .alternativas button {
+      background-color: #e0f2f1;
+      border: none;
+      color: #00695c;
+      padding: 8px 14px;
+      border-radius: 20px;
+      margin: 4px 6px 0 0;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .alternativas button:hover {
+      background-color: #b2dfdb;
+    }
+
+    .info-icon {
+      cursor: pointer;
+      color: #0d47a1;
+      font-size: 1.5rem;
+      transition: color 0.3s;
+    }
+
+    .info-icon:hover {
+      color: #00796b;
+    }
+
+    .tooltip {
+      visibility: hidden;
+      width: 250px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -125px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip::after {
+      content: "\\25BC";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+    }
+
+    .tooltip-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .submit-button {
+      background-color: #00796b;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .submit-button:hover {
+      background-color: #004d40;
+    }
+
+    .submit-button.loading {
+      background-color: #388e3c;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 30px;">
+      <img src="/Images/Chipiti logo.png" alt="Dr. Chipiti" style="max-width: 200px; height: auto;">
+    </div>
+
+    <button id="iniciar" class="submit-button" style="margin-bottom: 20px;">Iniciar</button>
+
+    <div id="entrevista" style="display:none; margin-bottom: 30px;">
+      <label>¿Cuál es tu objetivo principal? (ej. controlar glucosa, ideas de snacks, etc)</label>
+      <input type="text" id="objetivo">
+      <label>¿Prefieres snacks dulces o salados?</label>
+      <input type="text" id="preferencia">
+      <button id="guardarPerfil" class="submit-button">Guardar perfil</button>
+    </div>
+
+    <input type="text" id="buscador" placeholder="Escribe un alimento y, si tiene porción, inclúyela (ej. 3 rebanadas de pizza)...">
+    <button id="enviar" class="submit-button">Consultar</button>
+    <p id="estado" class="loading"></p>
+    <ul id="resultados"></ul>
+  </div>
+
+  <script>
+    const input = document.getElementById("buscador");
+    const resultados = document.getElementById("resultados");
+    const estado = document.getElementById("estado");
+    const enviarBtn = document.getElementById("enviar");
+
+    const iniciarBtn = document.getElementById("iniciar");
+    const entrevistaDiv = document.getElementById("entrevista");
+    const guardarPerfilBtn = document.getElementById("guardarPerfil");
+
+    let timer;
+
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+    });
+
+    enviarBtn.addEventListener("click", () => buscar(input.value.trim()));
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") buscar(input.value.trim());
+    });
+
+    iniciarBtn.addEventListener("click", () => {
+      entrevistaDiv.style.display = "block";
+      iniciarBtn.style.display = "none";
+    });
+
+    guardarPerfilBtn.addEventListener("click", () => {
+      const perfil = {
+        objetivo: document.getElementById("objetivo").value.trim(),
+        preferencia: document.getElementById("preferencia").value.trim()
+      };
+      localStorage.setItem("perfilChipiti", JSON.stringify(perfil));
+      entrevistaDiv.style.display = "none";
+      alert("✅ Perfil guardado. Ya puedes consultar alimentos personalizados.");
+    });
+
+    function mostrarTextoPersonalizado() {
+      const perfil = JSON.parse(localStorage.getItem("perfilChipiti") || "{}");
+      if (!perfil.objetivo && !perfil.preferencia) return "";
+      return `
+        <small><strong>Personalización:</strong> Objetivo: ${perfil.objetivo || "No especificado"}, Preferencia: ${perfil.preferencia || "No especificada"}</small>
+      `;
+    }
+
+    function buscar(valor) {
+      if (valor.length === 0) {
+        resultados.innerHTML = "";
+        estado.textContent = "";
+        return;
       }
-    };
 
-    contenedor.appendChild(label);
-    contenedor.appendChild(document.createElement('br'));
-    contenedor.appendChild(input);
-    contenedor.appendChild(document.createElement('br'));
-    contenedor.appendChild(boton);
-  }
+      estado.textContent = "⏳ Consultando con Chipiti...";
+      resultados.innerHTML = "";
+      enviarBtn.classList.add("loading");
 
-  function generarPerfil() {
-    const perfil = {
-      ...respuestas,
-      componentes: []
-    };
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/alimento?nombre=${encodeURIComponent(valor)}`);
+          const data = await res.json();
 
-    if (respuestas.embarazo === 'sí') {
-      perfil.componentes.push({
-        tipo: 'campo_texto',
-        nombre: 'Consulta de alimentos seguros en el embarazo',
-        placeholder: 'Ej. queso feta, salmón, jamón serrano',
-        accion: 'consultar_alimento'
-      });
+          if (data.error) {
+            estado.textContent = `⚠️ Error: ${data.error}`;
+          } else {
+            estado.textContent = "";
+            enviarBtn.classList.remove("loading");
+            resultados.innerHTML = `
+              <li>
+               <span class="${data.color}">${(data.iconos || []).join(' ')} ${data.nombre}</span>
+                <small><strong>Porción:</strong> ${data.porcion}</small>
+                <small><strong>Nivel glucémico:</strong> ${data.glucosa_nivel} (<strong>${data.glucosa_valor}</strong>)</small>
+                <small><strong>Glucosa final estimada:</strong> ${data.glucosa_post}</small>
+                <small><strong>Descripción nutricional:</strong> ${data.descripcion}</small>
+                <small><strong>Recomendación:</strong> ${data.recomendacion}</small>
+                ${mostrarTextoPersonalizado()}
+                <div class="alternativas">
+                  <small><strong>Alternativas sugeridas:</strong></small>
+                  ${data.alternativas.map(alt => `<button onclick="buscar('${alt}')">${alt}</button>`).join('')}
+                </div>
+                <div class="info-icon" onclick="alert('La glucosa estimada es el aumento aproximado en sangre después de consumir el alimento. El nivel glucémico es la categoría de impacto. Consultando con Chipiti!')">ℹ️</div>
+                <div class="tooltip tooltip-visible">El valor es estimado basado en el impacto postprandial.</div>
+              </li>
+            `;
+          }
+        } catch (e) {
+          estado.textContent = "❌ Error: No se pudo contactar con Chipiti.";
+          enviarBtn.classList.remove("loading");
+        }
+      }, 600);
     }
+  </script>
+</body>
+</html>
 
-    if (respuestas.condiciones.toLowerCase().includes('glucosa') || respuestas.objetivo.includes('glucosa')) {
-      perfil.componentes.push({
-        tipo: 'campo_texto',
-        nombre: 'Consulta alimentos y su impacto en glucosa',
-        placeholder: 'Ej. avena, mango, arroz',
-        accion: 'consultar_glucosa'
-      });
-    }
-
-    perfil.componentes.push({
-      tipo: 'campo_texto',
-      nombre: '¿Qué te gustaría comer hoy?',
-      placeholder: 'Ej. algo fresco, sin lácteos',
-      accion: 'sugerir_menu'
-    });
-
-    // Guardar en localStorage
-    localStorage.setItem('perfilChipiti', JSON.stringify(perfil));
-    mostrarCampos(perfil);
-  }
-
-  function mostrarCampos(perfil) {
-    document.getElementById('entrevista').style.display = 'none';
-    document.getElementById('perfilFinal').style.display = 'block';
-    document.getElementById('jsonOutput').textContent = JSON.stringify(perfil, null, 2);
-
-    const contenedor = document.getElementById('camposDinamicos');
-    contenedor.innerHTML = '';
-    perfil.componentes.forEach(campo => {
-      const div = document.createElement('div');
-      div.className = 'campo';
-
-      const label = document.createElement('label');
-      label.textContent = campo.nombre;
-
-      const input = document.createElement('input');
-      input.placeholder = campo.placeholder || '';
-
-      div.appendChild(label);
-      div.appendChild(document.createElement('br'));
-      div.appendChild(input);
-      contenedor.appendChild(div);
-    });
-  }
-
-  // Verificar si ya hay un perfil guardado
-window.addEventListener('DOMContentLoaded', () => {
-    const perfilGuardado = localStorage.getItem('perfilChipiti');
-    if (perfilGuardado) {
-      mostrarCampos(JSON.parse(perfilGuardado));
-    } else {
-      mostrarPregunta();
-    }
-  });
-</script>
